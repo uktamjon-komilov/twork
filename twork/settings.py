@@ -1,6 +1,7 @@
 from pathlib import Path
 import environ
 import os
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +28,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -89,9 +91,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = "en"
+AUTH_USER_MODEL = "api.User"
 
-TIME_ZONE = "UTC"
+LANGUAGE_CODE = "uz"
+
+LANGUAGES = (
+    ("uz", _("Uzbek")),
+    ("ru", _("Russian")),
+)
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, "locale"),
+]
+
+TIME_ZONE = "Asia/Tashkent"
 
 USE_I18N = True
 

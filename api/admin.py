@@ -1,3 +1,10 @@
 from django.contrib import admin
 
-# Register your models here.
+from api.models import *
+
+
+admin.site.register(Otp)
+admin.site.register(User)
+admin.site.register(Client)
+admin.site.register(Individual)
+admin.site.register(LegalEntity)
