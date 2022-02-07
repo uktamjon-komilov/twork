@@ -26,3 +26,11 @@ class OtpViewSet(
             return Response(status=status.HTTP_200_OK)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ClientViewSet(
+        mixins.CreateModelMixin,
+        GenericViewSet
+    ):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer

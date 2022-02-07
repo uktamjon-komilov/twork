@@ -6,6 +6,7 @@ from .views import *
 
 router = DefaultRouter()
 router.register("otp", OtpViewSet, basename="otp")
+router.register("client", ClientViewSet, basename="client")
 
 
 urlpatterns = [
