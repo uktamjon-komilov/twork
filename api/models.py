@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from api.managers import UserManager
 from api.services import OtpService
+from api.constants import *
 from api.utils import *
 
 
@@ -59,8 +60,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Client(models.Model):
     CLIENT_TYPE_CHOICES = [
-        ("individual", _("Individual")),
-        ("legal_entity", _("Legal entity")),
+        (INDIVIDUAL, _(INDIVIDUAL.title())),
+        (INDIVIDUAL, _(INDIVIDUAL.title())),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client", verbose_name=_("User"))
     fullname = models.CharField(max_length=125, verbose_name=_("Fullname"))

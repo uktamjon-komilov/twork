@@ -1,4 +1,3 @@
-from functools import partial
 from rest_framework import serializers
 
 from api.models import *
@@ -31,38 +30,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class ClientSerializer(serializers.ModelSerializer):
-    user = UserSerializer(many=False)
-
-    class Meta:
-        model = Client
-        fields = ["id", "user", "fullname", "client_type", "type_related_info"]
-        extra_kwargs = {
-            "client_type": {
-                "required": False,
-                "read_only": True
-            },
-            "type_related_info": {
-                "read_only": True
-            },
-            "user": {
-                "required": False
-            },
-            "fullname": {
-                "required": False
-            }
-        }
-    
-    def create(self, validated_data):
-        user_data = validated_data.pop("user")
-        user_serializer = UserSerializer(data=user_data)
-        if user_serializer.is_valid():
-            user = user_serializer.save()
-            validated_data["user"] = user
-            return super().create(validated_data)
-        return None
-
-
 class IndividualSerializer(serializers.ModelSerializer):
     class Meta:
         model = Individual
@@ -82,3 +49,63 @@ class IndividualSerializer(serializers.ModelSerializer):
                 individual.client = 0
             individual.save()
         return individual
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
+    details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Client
+        fields = ["id", "user", "fullname", "client_type", "type_related_info", "details"]
+        extra_kwargs = {
+            "client_type": {
+                "required": False,
+                "read_only": True
+            },
+            "type_related_info": {
+                "read_only": True
+            },
+            "user": {
+                "required": False
+            },
+            "fullname": {
+                "required": False
+            },
+            "details": {
+                "read_only": True
+            }
+        }
+    
+    def get_details(self, obj):
+        if obj.client_type == INDIVIDUAL:
+            individual = Individual.objects.filter(id=obj.type_related_info)
+            if individual.exists():
+                individual = individual.first()
+                return {**IndividualSerializer(individual).data}
+        if obj.client_type == LEGAL_ENTITY:
+            legal_entity = LegalEntity.objects.filter(id=obj.type_related_info)
+            if legal_entity.exists():
+                legal_entity = legal_entity.first()
+                return {}
+        return None
+    
+    def create(self, validated_data):
+        user_data = validated_data.pop("user")
+        user_serializer = UserSerializer(data=user_data)
+        if user_serializer.is_valid():
+            user = user_serializer.save()
+            validated_data["user"] = user
+            return super().create(validated_data)
+        return None
+
+
+class JwtTokenSerializer(serializers.Serializer):
+    phone = serializers.CharField()
+    password = serializers.CharField()
+
+    def validate(self, attrs):
+        phone = attrs.pop("phone", None)
+        if phone:
+            attrs["phone"] = clean_phone(phone)
+        return super().validate(attrs)

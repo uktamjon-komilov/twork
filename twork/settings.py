@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "api",
+    "rest_framework",
+    "drf_yasg"
 ]
 
 MIDDLEWARE = [
@@ -56,7 +58,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "twork.wsgi.application"
 
-if DEBUG:
+if not DEBUG:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -67,11 +69,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "HOST": env(""),
-            "PORT": env(""),
-            "NAME": env(""),
-            "USER": env(""),
-            "PASSWORD": env("")
+            "HOST": env("DB_HOST"),
+            "PORT": env("DB_PORT"),
+            "NAME": env("DB_NAME"),
+            "USER": env("DB_USER"),
+            "PASSWORD": env("DB_PASSWORD")
         }
     }
 
@@ -116,3 +118,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SWAGGER_SETTINGS = {
+   "DEFAULT_INFO": "twork.urls.api_info",
+}
