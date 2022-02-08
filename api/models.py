@@ -26,7 +26,7 @@ class Otp(models.Model):
         return super(Otp, self).save(*args, **kwargs)
     
     def is_expired(self, datetime):
-        return self.expires_in < datetime
+        return self.expires_in < datetime or self.activated
     
     def activate(self):
         self.activated = True
@@ -47,6 +47,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return getattr(self, self.USERNAME_FIELD)
+    
+    @property
+    def username(self):
+        return getattr(self, self.USERNAME_FIELD)
+    
+    def save(self, *args, **kwargs):
+        self.phone = clean_phone(self.phone)
+        return super().save(*args, **kwargs)
 
 
 class Client(models.Model):
@@ -59,8 +67,22 @@ class Client(models.Model):
     client_type = models.CharField(max_length=30, choices=CLIENT_TYPE_CHOICES, null=True, verbose_name=_("Client type"))
     type_related_info = models.IntegerField(null=True, verbose_name=_("Related info"))
 
+    def set_individual(self, id):
+        self.type_related_info = id
+        self.client_type = self.CLIENT_TYPE_CHOICES[0][0]
+    
+    def set_legal_entity(self, id):
+        self.type_related_info = id
+        self.client_type = self.CLIENT_TYPE_CHOICES[1][0]
+    
+    def delete(self, *args, **kwargs):
+        individual = Individual.objects.filter(client=self.id)
+        individual.delete()
+        return super().delete(*args, **kwargs)
+
 
 class Individual(models.Model):
+    client = models.IntegerField(default=0)
     fullname = models.CharField(max_length=125, verbose_name=_("Fullname"))
     email = models.EmailField(max_length=255, null=True, blank=True, verbose_name=_("Email"))
     passport_series = models.CharField(max_length=10, verbose_name=_("Passport series"))
@@ -72,8 +94,16 @@ class Individual(models.Model):
     city = models.CharField(max_length=255, verbose_name=_("City"))
     address = models.CharField(max_length=255, verbose_name=_("Address"))
 
+    def delete(self, *args, **kwargs):
+        clients = Client.objects.filter(pk=self.client)
+        for client in clients:
+            client.set_individual(0)
+            client.save()
+        super(Individual, self).delete(*args, **kwargs)
+
 
 class LegalEntity(models.Model):
+    client = models.IntegerField(default=0)
     fullname = models.CharField(max_length=125, verbose_name=_("Fullname"))
     company = models.CharField(max_length=255, verbose_name=_("Company"))
     bank_name = models.CharField(max_length=255, verbose_name=_("Bank name"))

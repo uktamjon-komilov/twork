@@ -34,3 +34,11 @@ class ClientViewSet(
     ):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+
+
+class IndividualViewSet(
+        mixins.CreateModelMixin,
+        GenericViewSet
+    ):
+    queryset = Individual.objects.all()
+    serializer_class = IndividualSerializer
