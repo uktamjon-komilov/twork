@@ -28,6 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+    
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+        user.save()
+        return user
 
 
 class IndividualSerializer(serializers.ModelSerializer):
@@ -49,6 +57,27 @@ class IndividualSerializer(serializers.ModelSerializer):
                 individual.client = 0
             individual.save()
         return individual
+
+
+class LegalEntitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LegalEntity
+        fields = "__all__"
+
+    def create(self, validated_data):
+        client_id = validated_data.get("client", 0)
+        legal_entity = super().create(validated_data)
+        if client_id:
+            client = Client.objects.filter(id=client_id)
+            if client.exists():
+                client = client.first()
+                client.set_legal_entity(legal_entity.id)
+                client.save()
+                legal_entity.client = client_id
+            else:
+                legal_entity.client = 0
+            legal_entity.save()
+        return legal_entity
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -87,7 +116,7 @@ class ClientSerializer(serializers.ModelSerializer):
             legal_entity = LegalEntity.objects.filter(id=obj.type_related_info)
             if legal_entity.exists():
                 legal_entity = legal_entity.first()
-                return {}
+                return {**LegalEntitySerializer(legal_entity).data}
         return None
     
     def create(self, validated_data):
@@ -98,6 +127,10 @@ class ClientSerializer(serializers.ModelSerializer):
             validated_data["user"] = user
             return super().create(validated_data)
         return None
+    
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", None)
+        return super().update(instance, validated_data)
 
 
 class JwtTokenSerializer(serializers.Serializer):

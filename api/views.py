@@ -71,6 +71,7 @@ class OtpViewSet(
 
 class ClientViewSet(
         mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
         mixins.RetrieveModelMixin,
         GenericViewSet
     ):
@@ -84,6 +85,23 @@ class IndividualViewSet(
     ):
     queryset = Individual.objects.all()
     serializer_class = IndividualSerializer
+
+
+class UserViewSet(
+        mixins.UpdateModelMixin,
+        GenericViewSet
+    ):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    
+
+
+class LegalEntityViewSet(
+        mixins.CreateModelMixin,
+        GenericViewSet
+    ):
+    queryset = LegalEntity.objects.all()
+    serializer_class = LegalEntitySerializer
 
 
 class JwtTokenApiView(TokenObtainPairView):

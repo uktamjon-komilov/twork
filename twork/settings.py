@@ -24,7 +24,10 @@ INSTALLED_APPS = [
 
     "api",
     "rest_framework",
-    "drf_yasg"
+    "drf_yasg",
+    "taggit",
+    "mptt",
+    "parler"
 ]
 
 MIDDLEWARE = [
@@ -58,7 +61,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "twork.wsgi.application"
 
-if not DEBUG:
+if DEBUG:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

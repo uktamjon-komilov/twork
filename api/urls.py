@@ -7,8 +7,10 @@ from .views import *
 
 router = DefaultRouter()
 router.register("otp", OtpViewSet, basename="otp")
+router.register("user", UserViewSet, basename="user")
 router.register("client", ClientViewSet, basename="client")
 router.register("individual", IndividualViewSet, basename="individual")
+router.register("legal-entity", LegalEntityViewSet, basename="legal-entity")
 
 
 urlpatterns = [
