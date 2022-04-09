@@ -27,7 +27,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "taggit",
     "mptt",
-    "parler"
+    "parler",
+    "django_filters"
 ]
 
 MIDDLEWARE = [

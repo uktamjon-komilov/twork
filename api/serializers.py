@@ -38,7 +38,24 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class IndividualSerializer(serializers.ModelSerializer):
+class VariableModelSerializer(serializers.ModelSerializer):
+    label = "-"
+    allow_null = True
+
+
+class IndividualGetSerializer(VariableModelSerializer):
+    class Meta:
+        model = Individual
+        fields = "__all__"
+
+
+class IndividualUpdateSerializer(VariableModelSerializer):
+    class Meta:
+        model = Individual
+        exclude = ["client"]
+
+
+class IndividualCreateSerializer(VariableModelSerializer):
     class Meta:
         model = Individual
         fields = "__all__"
@@ -59,7 +76,19 @@ class IndividualSerializer(serializers.ModelSerializer):
         return individual
 
 
-class LegalEntitySerializer(serializers.ModelSerializer):
+class LegalEntityGetSerializer(VariableModelSerializer):
+    class Meta:
+        model = LegalEntity
+        fields = "__all__"
+
+
+class LegalEntityUpdateSerializer(VariableModelSerializer):
+    class Meta:
+        model = LegalEntity
+        exclude = ["client"]
+
+
+class LegalEntityCreateSerializer(VariableModelSerializer):
     class Meta:
         model = LegalEntity
         fields = "__all__"
@@ -80,7 +109,7 @@ class LegalEntitySerializer(serializers.ModelSerializer):
         return legal_entity
 
 
-class ClientSerializer(serializers.ModelSerializer):
+class ClientGetSerializer(VariableModelSerializer):
     user = UserSerializer(many=False)
     details = serializers.SerializerMethodField()
 
@@ -111,13 +140,36 @@ class ClientSerializer(serializers.ModelSerializer):
             individual = Individual.objects.filter(id=obj.type_related_info)
             if individual.exists():
                 individual = individual.first()
-                return {**IndividualSerializer(individual).data}
+                return {**IndividualGetSerializer(individual).data}
         if obj.client_type == LEGAL_ENTITY:
             legal_entity = LegalEntity.objects.filter(id=obj.type_related_info)
             if legal_entity.exists():
                 legal_entity = legal_entity.first()
-                return {**LegalEntitySerializer(legal_entity).data}
+                return {**LegalEntityGetSerializer(legal_entity).data}
         return None
+
+
+class ClientCreateSerializer(VariableModelSerializer):
+    user = UserSerializer(many=False)
+
+    class Meta:
+        model = Client
+        fields = ["id", "user", "fullname", "client_type", "type_related_info"]
+        extra_kwargs = {
+            "client_type": {
+                "required": False,
+                "read_only": True
+            },
+            "type_related_info": {
+                "read_only": True
+            },
+            "user": {
+                "required": False
+            },
+            "fullname": {
+                "required": False
+            }
+        }
     
     def create(self, validated_data):
         user_data = validated_data.pop("user")
@@ -127,10 +179,28 @@ class ClientSerializer(serializers.ModelSerializer):
             validated_data["user"] = user
             return super().create(validated_data)
         return None
-    
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        return super().update(instance, validated_data)
+
+
+class ClientUpdateSerializer(VariableModelSerializer):
+
+    class Meta:
+        model = Client
+        fields = ["id", "fullname", "client_type", "type_related_info"]
+        extra_kwargs = {
+            "client_type": {
+                "required": False,
+                "read_only": True
+            },
+            "type_related_info": {
+                "read_only": True
+            },
+            "user": {
+                "required": False
+            },
+            "fullname": {
+                "required": False
+            }
+        }
 
 
 class JwtTokenSerializer(serializers.Serializer):

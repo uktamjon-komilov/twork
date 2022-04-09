@@ -75,6 +75,8 @@ class Client(models.Model):
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client", verbose_name=_("User"))
     fullname = models.CharField(max_length=125, verbose_name=_("Fullname"))
+    balance = models.FloatField(default=0.0)
+    coins = models.IntegerField(default=0)
     client_type = models.CharField(max_length=30, choices=CLIENT_TYPE_CHOICES, null=True, verbose_name=_("Client type"))
     type_related_info = models.IntegerField(null=True, verbose_name=_("Related info"))
 
@@ -206,7 +208,6 @@ class Project(models.Model):
     project_category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True)
     freelancer_category = models.ForeignKey(FreelancerCategory, on_delete=models.SET_NULL, null=True)
     description = models.TextField(verbose_name=_("Description"))
-    tags = TaggableManager()
     price_negotiatable = models.BooleanField(default=False)
     price = models.FloatField(default=0.0)
     deadline_negotiatable = models.BooleanField(default=False)
@@ -218,10 +219,27 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    tags = TaggableManager()
+
 
 class ProjectPhoto(models.Model):
     photo = models.FileField(upload_to="images/project/")
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="photos")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ProjectFile(models.Model):
+    file = models.FileField(upload_to="files/project/")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="files")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+
+class TempFile(models.Model):
+    file = models.FileField(upload_to="files/temp/")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

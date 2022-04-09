@@ -69,39 +69,12 @@ class OtpViewSet(
             )
 
 
-class ClientViewSet(
-        mixins.CreateModelMixin,
-        mixins.UpdateModelMixin,
-        mixins.RetrieveModelMixin,
-        GenericViewSet
-    ):
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-
-
-class IndividualViewSet(
-        mixins.CreateModelMixin,
-        GenericViewSet
-    ):
-    queryset = Individual.objects.all()
-    serializer_class = IndividualSerializer
-
-
 class UserViewSet(
         mixins.UpdateModelMixin,
         GenericViewSet
     ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    
-
-
-class LegalEntityViewSet(
-        mixins.CreateModelMixin,
-        GenericViewSet
-    ):
-    queryset = LegalEntity.objects.all()
-    serializer_class = LegalEntitySerializer
 
 
 class JwtTokenApiView(TokenObtainPairView):
@@ -147,8 +120,72 @@ class JwtTokenApiView(TokenObtainPairView):
             "freelancer": None
         }
         if hasattr(user, "client"):
-            client_serializer = ClientSerializer(user.client)
+            client_serializer = ClientGetSerializer(user.client)
             result["client"] = {**client_serializer.data}
         elif hasattr(user, "freelancer"):
             pass
         return Response(result, status=status.HTTP_200_OK)
+
+
+class ClientViewSet(
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        mixins.RetrieveModelMixin,
+        GenericViewSet
+    ):
+    queryset = Client.objects.all()
+    serializer_class = ClientCreateSerializer
+    
+    def get_serializer(self, *args, **kwargs):
+        if self.action in ["list", "retrive"]:
+            return ClientGetSerializer
+        elif self.action in ["update", "partial_update"]:
+            return ClientUpdateSerializer
+        return ClientCreateSerializer
+    
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Client.objects.none()
+        else:
+            print("hi")
+        return super().get_queryset()
+
+
+class LegalEntityViewSet(
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        GenericViewSet
+    ):
+    queryset = LegalEntity.objects.all()
+    
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "list"]:
+            return LegalEntityGetSerializer
+        elif self.action in ["update", "partial_update"]:
+            return LegalEntityUpdateSerializer
+        return LegalEntityCreateSerializer
+    
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LegalEntity.objects.none()
+        return super().get_queryset()
+
+
+class IndividualViewSet(
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        GenericViewSet
+    ):
+    queryset = Individual.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "list"]:
+            return IndividualGetSerializer
+        elif self.action in ["update", "partial_update"]:
+            return IndividualUpdateSerializer
+        return IndividualCreateSerializer
+    
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Individual.objects.none()
+        return super().get_queryset()
