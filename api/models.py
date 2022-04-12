@@ -205,9 +205,10 @@ class Project(models.Model):
     ]
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=255, verbose_name=_("Project title"))
+    description = models.TextField(verbose_name=_("Description"))
     project_category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True)
     freelancer_category = models.ForeignKey(FreelancerCategory, on_delete=models.SET_NULL, null=True)
-    description = models.TextField(verbose_name=_("Description"))
+    worker_type = models.CharField(max_length=255, choices=WORKER_TYPE)
     price_negotiatable = models.BooleanField(default=False)
     price = models.FloatField(default=0.0)
     deadline_negotiatable = models.BooleanField(default=False)

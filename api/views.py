@@ -1,4 +1,4 @@
-from rest_framework.viewsets import mixins, GenericViewSet
+from rest_framework.viewsets import mixins, GenericViewSet, ModelViewSet
 from rest_framework.decorators import action
 from django.utils import timezone
 from rest_framework import status
@@ -189,3 +189,69 @@ class IndividualViewSet(
         if getattr(self, "swagger_fake_view", False):
             return Individual.objects.none()
         return super().get_queryset()
+
+
+class TempFileCreateDeleteViewSet(
+        mixins.CreateModelMixin,
+        mixins.DestroyModelMixin,
+        GenericViewSet
+    ):
+    queryset = TempFile.objects.all()
+    serializer_class = TempFileSerializer
+
+
+class ProjectCategoryListViewSet(
+        mixins.ListModelMixin,
+        GenericViewSet
+    ):
+    queryset = ProjectCategory.objects.all()
+    serializer_class = ProjectCategorySerializer
+
+
+class FreelancerCategoryListViewSet(
+        mixins.ListModelMixin,
+        GenericViewSet
+    ):
+    queryset = FreelancerCategory.objects.all()
+    serializer_class = FreelancerCategorySerializer
+
+
+class WorkerTypeListViewSet(
+        mixins.ListModelMixin,
+        GenericViewSet
+    ):
+    queryset = None
+    serializer_class = None
+
+    def list(self, request, *args, **kwargs):
+        result = []
+        for item in WORKER_TYPE:
+            result.append({
+                "slug": item[0],
+                "title": item[1]
+            })
+        return Response(result)
+
+
+class ProjectCreateUpdateViewSet(ModelViewSet):
+    queryset = Project.objects.all()
+    
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return ProjectCreateUpdateSerializer
+        return ProjectGetSerializer
+    
+
+    def create(self, request, *args, **kwargs):
+        serialized = self.get_serializer(data=request.data)
+        serialized.is_valid(raise_exception=True)
+        files = serialized.validated_data.pop("files", None)
+        project = serialized.save()
+
+        if files:
+            for file in files:
+                ProjectFile(file=file.file, project=project).save()
+        
+        serializer = ProjectGetSerializer(project)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

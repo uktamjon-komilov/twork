@@ -1,6 +1,11 @@
+from wsgiref.validate import validator
 from rest_framework import serializers
+from parler_rest.serializers import TranslatableModelSerializer, TranslatedFieldsField
+
 
 from api.models import *
+from api.mixins import TranslatedSerializerMixin
+from api.validators import validate_freelancer_category_id, validate_project_category_id, validate_status_client_project
 
 
 class OtpSerializer(serializers.ModelSerializer):
@@ -41,6 +46,15 @@ class UserSerializer(serializers.ModelSerializer):
 class VariableModelSerializer(serializers.ModelSerializer):
     label = "-"
     allow_null = True
+
+
+
+class TransModelSerializer(
+    VariableModelSerializer,
+    TranslatedSerializerMixin,
+    TranslatableModelSerializer
+):
+    pass
 
 
 class IndividualGetSerializer(VariableModelSerializer):
@@ -212,3 +226,75 @@ class JwtTokenSerializer(serializers.Serializer):
         if phone:
             attrs["phone"] = clean_phone(phone)
         return super().validate(attrs)
+
+
+class TempFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TempFile
+        fields = ["id", "file"]
+
+
+class ProjectCategorySerializer(TransModelSerializer):
+    translations = TranslatedFieldsField(shared_model=ProjectCategory)
+
+    class Meta:
+        model = ProjectCategory
+        fields = ["id", "translations", "slug"]
+
+
+class FreelancerCategorySerializer(TransModelSerializer):
+    translations = TranslatedFieldsField(shared_model=FreelancerCategory)
+
+    class Meta:
+        model = FreelancerCategory
+        fields = ["id", "translations", "slug"]
+
+
+class ProjectCreateUpdateSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255)
+    description = serializers.CharField()
+    project_category = serializers.IntegerField(validators=[validate_project_category_id])
+    freelancer_category = serializers.IntegerField(validators=[validate_freelancer_category_id])
+    worker_type = serializers.CharField(max_length=255)
+    price_negotiatable = serializers.BooleanField(default=False)
+    price = serializers.FloatField()
+    deadline_negotiatable = serializers.BooleanField(default=False)
+    deadline = serializers.DateField()
+    pro_task = serializers.BooleanField(default=False)
+    status = serializers.CharField(max_length=255, validators=[validate_status_client_project])
+    files = serializers.ListField()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        project_category_id = attrs.pop("project_category")
+        try:
+            project_category = ProjectCategory.objects.get(id=project_category_id)
+            attrs["project_category"] = project_category
+        except:
+            raise serializers.ValidationError("Project category with the ID ({}) does not exist.".format(project_category_id))
+        
+        freelancer_category_id = attrs.pop("freelancer_category")
+        try:
+            freelancer_category = FreelancerCategory.objects.get(id=freelancer_category_id)
+            attrs["freelancer_category"] = freelancer_category
+        except:
+            raise serializers.ValidationError("Freelancer category with the ID ({}) does not exist.".format(freelancer_category_id))
+        
+        file_ids = attrs["files"]
+        existing_files = []
+        for _id in file_ids:
+            try:
+                temp_file = TempFile.objects.get(id=_id)
+                existing_files.append(temp_file)
+            except:
+                pass
+        attrs["files"] = existing_files
+        
+        return attrs
+
+
+class ProjectGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = "__all__"
